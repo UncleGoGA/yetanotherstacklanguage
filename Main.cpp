@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 
 		for (auto it : Parser::note)
 		{
-			cout << get<1>(it);
+			cout << get<1>(it) << '\n';
 		}
 	}
 

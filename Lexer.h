@@ -8,7 +8,7 @@
 #include "Exceptions.h"
 
 #define complete_str std::tuple<size_t, std::string> //row one_string
-#define lexed_str std::tuple<size_t, std::string, std::vector<std::string>> //row token argument(s)
+#define lexed_str std::tuple<size_t, std::string, std::string> //row token argument
 
 namespace Lexem
 {
@@ -79,42 +79,47 @@ namespace Lexem
 		}
 	}
 
-	std::vector<std::string> arg_parse(std::string argument)
+	std::string arg_parse(std::string argument)
 	{
-		std::vector<std::string> result;
 		std::string word;
 
 		for (auto it : argument)
 		{
 			if (isalpha(it) || isdigit(it))
-			{
 				word.push_back(it);
-			}
+
 			else if (isspace(it) && !word.empty( ))
-			{
-				result.push_back(word);
-				word.clear( );
-			}
+				return word;
 		}
 
-		return result;
+		return word;
 	}
 
 	void Lex_(vector<complete_str>& Compl_STR)
 	{
 		string token;
-		string argument;
+		string str;
 
 		for (auto it : Compl_STR)
 		{
-			for (auto s_it : get<1>(it))
+			if (get<1>(it) == "write" || get<1>(it) == "read" || get<1>(it) == "end")
 			{
-				if (isalpha(s_it) || isdigit(s_it))
-				{
-					auto fst = s_it;
-					for (; fst != ' '; ++fst); //can be better
+				token = get<1>(it);
+				processed_note.push_back({get<0>(it), token, {}});
 
-					token = std::string(s_it, fst);//check it
+				token.clear( );
+				continue;
+			}
+
+			str = get<1>(it);
+			for (auto s_it = str.begin(); s_it != str.end(); ++s_it)
+			{
+				size_t pos = 0;
+				if (isalpha(*s_it) || isdigit(*s_it))
+				{
+					
+					for (; *s_it != ' '; ++s_it, ++pos)
+						token.push_back(*s_it);
 
 					if (Utils::tokenaze(token) == Utils::e_Err)
 					{
@@ -122,9 +127,11 @@ namespace Lexem
 						throw excpt;
 					}
 
-					argument = std::string(fst, get<1>(it).find('\n')); //check it
-					//auto str = std::string(input.begin( ) + input.find(' '), input.end( ));
-					processed_note.push_back({get<0>(it), token, arg_parse(argument)});
+					processed_note.push_back({get<0>(it), token, arg_parse(get<1>(it).substr(pos, get<1>(it).size()))});
+
+					token.clear( );
+					
+					break;
 				}
 			}
 		}

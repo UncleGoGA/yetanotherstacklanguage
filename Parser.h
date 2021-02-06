@@ -39,9 +39,11 @@ namespace Parser
 
 			if (!stream.is_open( ))
 			{
+				stream.close( );
 				return false;
 			}
 
+			stream.close( );
 			return true;
 		}
 
@@ -119,6 +121,8 @@ namespace Parser
 
 			STR.push_back(it);
 		}
+
+		stream.close( );
 	}
 }
 
