@@ -28,7 +28,7 @@ namespace Parser
 	//дл€ этого нужно будет написать функцию дл€ преобразовани€ или отдельную дл€ работы
 	namespace Utils
 	{
-		static enum Symbols //Ќеобходима€ проверка на разрешенные символы
+		enum Symbols //Ќеобходима€ проверка на разрешенные символы
 		{
 			e_Letter, e_Digit, e_Delim, e_NewLine, e_Operation, e_Compare, e_Error, e_Stop, e_Slash
 		};
@@ -102,9 +102,14 @@ namespace Parser
 		Pre_Str.assign((std::istreambuf_iterator<char>(stream)),
 			std::istreambuf_iterator<char>( ));
 
+		//Need to currently parse last sentence
+		//then we add null terminator to input string
+
+		Pre_Str.push_back('\0');
+
 		for (auto it : Pre_Str)//запускаем цикл по всей записи, в поисках строк
 		{
-			if (it == '\n' || it == '\0') //признак окончани€ строки, следовательно необходимо провести проверку прочитанной записи
+			if (it == '\n' || it == '\0' || it == ',') //признак окончани€ строки, следовательно необходимо провести проверку прочитанной записи
 			{
 				if (!Utils::transliterate_str(STR))
 				{
