@@ -18,7 +18,7 @@ namespace Lexem
 
 	namespace Utils
 	{
-		static enum Tokens
+		enum Tokens
 		{
 			e_Comment, e_Dollar, e_JI, e_Pop, e_Push, e_Jmp, e_Read, e_Write, e_list, e_End,
 			e_Diff, e_Sym, e_Inter, e_Union, e_Err, e_End_mark, e_TCompare, e_TOperation
@@ -63,7 +63,7 @@ namespace Lexem
 			else if (word [0] == '<' || word [0] == '>' || word [0] == '!' || word [0] == '=')
 				return e_TCompare;
 
-			else if (word == "Comm")
+			else if (word == "Comm" || word == "//") //at this moment we can use only C++ commentary style
 				return e_Comment;
 
 			else if (word == "Mark")
@@ -82,6 +82,7 @@ namespace Lexem
 	std::string arg_parse(std::string argument)
 	{
 		std::string word;
+		std::vector<std::string> words;
 
 		for (auto it : argument)
 		{
@@ -89,7 +90,18 @@ namespace Lexem
 				word.push_back(it);
 
 			else if (isspace(it) && !word.empty( ))
-				return word;
+				words.push_back(word);
+		}
+
+		word.clear( );
+
+		for (auto it : words)
+		{
+			for (auto s_it = it.begin(); s_it != it.end(); ++s_it)
+			{
+				word.push_back(*s_it);
+			}
+			word.push_back(' ');
 		}
 
 		return word;
@@ -115,9 +127,8 @@ namespace Lexem
 			for (auto s_it = str.begin(); s_it != str.end(); ++s_it)
 			{
 				size_t pos = 0;
-				if (isalpha(*s_it) || isdigit(*s_it))
+				if (isalpha(*s_it) || isdigit(*s_it) || *s_it == '/'/*refactoring*/)
 				{
-					
 					for (; *s_it != ' '; ++s_it, ++pos)
 						token.push_back(*s_it);
 
