@@ -21,11 +21,12 @@ namespace Lexem
 		enum Tokens
 		{
 			e_Comment, e_Dollar, e_JI, e_Pop, e_Push, e_Jmp, e_Read, e_Write, e_list, e_End,
-			e_Diff, e_Sym, e_Inter, e_Union, e_Err, e_End_mark, e_TCompare, e_TOperation
+			e_Diff, e_Sym, e_Inter, e_Union, e_Err, e_End_mark, e_TCompare, e_TOperation, e_At,
+			e_Concat, e_Size, e_Substr, e_Delsubstr
 
 		};
-
-		static int tokenaze(std::string word)
+		//refactoring
+		static int tokenaze(std::string word) //better to get all lexems by lower
 		{
 			if (word == "ji")
 				return e_JI;
@@ -74,6 +75,21 @@ namespace Lexem
 
 			else if (word == "end")
 				return e_End;
+
+			else if (word == "at" || word == "At") //Random access into str
+				return e_At;
+
+			else if (word == "concat" || word == "Concat") //Concat with other str
+				return e_Concat;
+
+			else if (word == "size" || word == "Size")
+				return e_Size;
+
+			else if (word == "substr" || word == "Substr")
+				return e_Substr;
+
+			else if (word == "delsubstr" || word == "Delsubstr")
+				return e_Delsubstr;
 
 			return e_Err;
 		}
