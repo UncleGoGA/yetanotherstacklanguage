@@ -26,6 +26,18 @@ namespace Parser
 
 	//возможно стоит добавить возможность парсить не только из txt
 	//для этого нужно будет написать функцию для преобразования или отдельную для работы
+
+	void remove_spaces(string& STR)
+	{
+		for (size_t i = 0; i < STR.size( ); ++i)
+		{
+			if (STR [i] == ' ' && STR[i - 1] == ' ' && i > 0 && i < STR.size() - 1)
+			{
+				STR.erase(i, 1);
+			}
+		}
+	}
+
 	namespace Utils
 	{
 		enum Symbols //Необходимая проверка на разрешенные символы
@@ -107,10 +119,20 @@ namespace Parser
 
 		Pre_Str.push_back('\0');
 
+		remove_spaces(Pre_Str);
+
 		for (auto it : Pre_Str)//запускаем цикл по всей записи, в поисках строк
 		{
-			if (it == '\n' || it == '\0' || it == ',') //признак окончания строки, следовательно необходимо провести проверку прочитанной записи
+			if (it == ';'/*it == '\n' || it == '\0' || it == ','*/) //признак окончания строки, следовательно необходимо провести проверку прочитанной записи
 			{
+	/*			if (*STR.begin( ) == '\n')
+					STR.erase(STR.begin( ));*/
+				for (std::string::iterator s_it = STR.begin(); s_it != STR.end(); ++s_it)
+				{
+					if (*s_it == '\n')
+						STR.erase(s_it);
+				}
+
 				if (!Utils::transliterate_str(STR))
 				{
 					Main_exception::parse_exception excp("Unrecognized symbols", Cur_Row);

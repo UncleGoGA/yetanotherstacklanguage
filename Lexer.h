@@ -8,7 +8,25 @@
 #include "Exceptions.h"
 
 #define complete_str std::tuple<size_t, std::string> //row one_string
+//need to use vector as data storage for arguments
 #define lexed_str std::tuple<size_t, std::string, std::string> //row token argument
+
+class em
+{
+	em(const em& e) = default;
+	em(em&& e);
+	
+public:
+	static int a;
+};
+
+int em::a = 5;
+
+class en
+{
+public:
+	constexpr static int a = 5;
+};
 
 namespace Lexem
 {
@@ -97,6 +115,7 @@ namespace Lexem
 
 	std::string arg_parse(std::string argument)
 	{
+		argument.push_back(' ');
 		std::string word;
 		std::vector<std::string> words;
 
@@ -106,7 +125,10 @@ namespace Lexem
 				word.push_back(it);
 
 			else if (isspace(it) && !word.empty( ))
+			{
 				words.push_back(word);
+				word.clear( );
+			}
 		}
 
 		word.clear( );
@@ -127,6 +149,11 @@ namespace Lexem
 	{
 		string token;
 		string str;
+
+		enum arrow //declare here iterators for tuple
+		{
+
+		};
 
 		for (auto it : Compl_STR)
 		{
