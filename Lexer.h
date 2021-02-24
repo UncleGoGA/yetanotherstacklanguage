@@ -23,8 +23,12 @@ namespace Lexem
 		{
 			e_Comment, e_Dollar, e_JI, e_Pop, e_Push, e_Jmp, e_Read, e_Write, e_list, e_End,
 			e_Diff, e_Sym, e_Inter, e_Union, e_Err, e_End_mark, e_TCompare, e_TOperation, e_At,
-			e_Concat, e_Size, e_Substr, e_Delsubstr
+			e_Concat, e_Size, e_Substr, e_Delsubstr, e_Empty, e_Cycle, e_If, e_Init, e_Create,
+			e_Except, e_Type, e_Var, e_Mark,
 
+
+
+			e_AllToken
 		};
 
 		enum arrow
@@ -70,12 +74,6 @@ namespace Lexem
 			else if (word == "union")
 				return e_Union;
 
-			else if (word [0] == '+' || word [0] == '-' || word [0] == '*' || word [0] == '/' || word [0] == '%')
-				return e_TOperation;
-
-			else if (word [0] == '<' || word [0] == '>' || word [0] == '!' || word [0] == '=')
-				return e_TCompare;
-
 			else if (word == "Comm" || word == "//" || word == "<--") //at this moment we can use C++ commentary style
 				return e_Comment;
 
@@ -102,6 +100,34 @@ namespace Lexem
 
 			else if (word == "delsubstr" || word == "Delsubstr")
 				return e_Delsubstr;
+
+			else if (word == ";")
+				return e_Empty;
+
+			else if (word == "for" || word == "while")
+				return e_If;
+
+			else if (word [0] == '+' || word [0] == '-' || word [0] == '*' || word [0] == '/' || word [0] == '%')
+				return e_TOperation;
+
+			else if (word [0] == '<' || word [0] == '>' || word [0] == '!' || word [0] == '=')
+				return e_TCompare;
+
+			else if (word == "exception")
+				return e_Except;
+
+			else if (word [0] >= 'A' && word [0] <= 'Z' || word [0] >= 'a' && word [0] <= 'z')
+				return e_Var;
+
+			else if (word == "type")
+				return e_Type;
+
+			else if (word == "let")
+				return e_Init;
+
+			else if (word [0] == '<' && word [1] == '<'
+				&& word [word.size( ) - 1] == '>' && word [word.size( ) - 2] == '>')
+				return e_Mark;
 
 			return e_Err;
 		}
@@ -146,7 +172,8 @@ namespace Lexem
 
 		for (auto it : Compl_STR)
 		{
-			if (get<Utils::e_WholeStr>(it) == "write" || get<Utils::e_WholeStr>(it) == "read" || get<Utils::e_WholeStr>(it) == "end")
+			if (get<Utils::e_WholeStr>(it) == "write" || get<Utils::e_WholeStr>(it) == "read" || get<Utils::e_WholeStr>(it) == "end"
+				|| Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Mark)
 			{
 				token = get<Utils::e_WholeStr>(it);
 				processed_note.push_back({get<Utils::e_Number>(it), token, {}});
@@ -171,19 +198,32 @@ namespace Lexem
 						throw excpt;
 					}
 
-
-					if (token == "<--")
+					if (token == "<--" || token == "exception" || Utils::tokenaze(token) == Utils::e_Var)
 					{
 						string semi = get<Utils::e_WholeStr>(it);
 
 						for (string::reverse_iterator r_it = semi.rbegin( ); r_it != semi.rend( ); ++r_it)
 						{
-							if (*r_it == '>' && *(r_it + 1) == '-' && *(r_it + 2) == '-' && *(r_it + 3) != '<')
+							if (Utils::tokenaze(token) == Utils::e_Var)
 							{
-								processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
+								if (*r_it == 'e' && *(r_it + 1) == 'p' && *(r_it + 2) == 'y' && *(r_it + 3) == 'T' &&
+									(*(r_it + 4) == ':' || *(r_it + 5) == ':'))
+								{
+									processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
 
-								token.clear( );
-								break;
+									token.clear( );
+									break;
+								}
+							}
+							else
+							{
+								if (*r_it == '>' && *(r_it + 1) == '-' && *(r_it + 2) == '-' && *(r_it + 3) != '<')
+								{
+									processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
+
+									token.clear( );
+									break;
+								}
 							}
 						}
 					}
