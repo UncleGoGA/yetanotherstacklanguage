@@ -11,23 +11,6 @@
 //need to use vector as data storage for arguments
 #define lexed_str std::tuple<size_t, std::string, std::string> //row token argument
 
-class em
-{
-	em(const em& e) = default;
-	em(em&& e);
-	
-public:
-	static int a;
-};
-
-int em::a = 5;
-
-class en
-{
-public:
-	constexpr static int a = 5;
-};
-
 namespace Lexem
 {
 	using namespace std;
@@ -43,8 +26,19 @@ namespace Lexem
 			e_Concat, e_Size, e_Substr, e_Delsubstr
 
 		};
+
+		enum arrow
+		{
+			e_Number,
+			e_WholeStr,
+			e_Lexem = 1,
+			e_Argument,
+
+			e_count
+		};
+
 		//refactoring
-		static int tokenaze(std::string word) //better to get all lexems by lower
+		static int tokenaze(std::string& word) //better to get all lexems by lower
 		{
 			if (word == "ji")
 				return e_JI;
@@ -82,7 +76,7 @@ namespace Lexem
 			else if (word [0] == '<' || word [0] == '>' || word [0] == '!' || word [0] == '=')
 				return e_TCompare;
 
-			else if (word == "Comm" || word == "//") //at this moment we can use only C++ commentary style
+			else if (word == "Comm" || word == "//" || word == "<--") //at this moment we can use C++ commentary style
 				return e_Comment;
 
 			else if (word == "Mark")
@@ -135,7 +129,7 @@ namespace Lexem
 
 		for (auto it : words)
 		{
-			for (auto s_it = it.begin(); s_it != it.end(); ++s_it)
+			for (auto s_it = it.begin( ); s_it != it.end( ); ++s_it)
 			{
 				word.push_back(*s_it);
 			}
@@ -150,27 +144,23 @@ namespace Lexem
 		string token;
 		string str;
 
-		enum arrow //declare here iterators for tuple
-		{
-
-		};
-
 		for (auto it : Compl_STR)
 		{
-			if (get<1>(it) == "write" || get<1>(it) == "read" || get<1>(it) == "end")
+			if (get<Utils::e_WholeStr>(it) == "write" || get<Utils::e_WholeStr>(it) == "read" || get<Utils::e_WholeStr>(it) == "end")
 			{
-				token = get<1>(it);
-				processed_note.push_back({get<0>(it), token, {}});
+				token = get<Utils::e_WholeStr>(it);
+				processed_note.push_back({get<Utils::e_Number>(it), token, {}});
 
 				token.clear( );
 				continue;
 			}
 
-			str = get<1>(it);
-			for (auto s_it = str.begin(); s_it != str.end(); ++s_it)
+			str = get<Utils::e_WholeStr>(it);
+			for (auto s_it = str.begin( ); s_it != str.end( ); ++s_it)
 			{
 				size_t pos = 0;
-				if (isalpha(*s_it) || isdigit(*s_it) || *s_it == '/'/*refactoring*/)
+				if (isalpha(*s_it) || isdigit(*s_it) || *s_it == '/'/*refactoring*/ ||
+					*s_it == '-' || *s_it == '<')
 				{
 					for (; *s_it != ' '; ++s_it, ++pos)
 						token.push_back(*s_it);
@@ -181,10 +171,29 @@ namespace Lexem
 						throw excpt;
 					}
 
-					processed_note.push_back({get<0>(it), token, arg_parse(get<1>(it).substr(pos, get<1>(it).size()))});
+
+					if (token == "<--")
+					{
+						string semi = get<Utils::e_WholeStr>(it);
+
+						for (string::reverse_iterator r_it = semi.rbegin( ); r_it != semi.rend( ); ++r_it)
+						{
+							if (*r_it == '>' && *(r_it + 1) == '-' && *(r_it + 2) == '-' && *(r_it + 3) != '<')
+							{
+								processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
+
+								token.clear( );
+								break;
+							}
+						}
+					}
+
+
+					processed_note.push_back({get<Utils::e_Number>(it), token,
+						arg_parse(get<Utils::e_WholeStr>(it).substr(pos, get<Utils::e_WholeStr>(it).size( )))});
 
 					token.clear( );
-					
+
 					break;
 				}
 			}
