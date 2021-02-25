@@ -40,7 +40,6 @@ namespace Lexem
 
 			e_count
 		};
-
 		//refactoring
 		static int tokenaze(std::string& word) //better to get all lexems by lower
 		{
@@ -173,7 +172,7 @@ namespace Lexem
 		for (auto it : Compl_STR)
 		{
 			if (get<Utils::e_WholeStr>(it) == "write" || get<Utils::e_WholeStr>(it) == "read" || get<Utils::e_WholeStr>(it) == "end"
-				|| Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Mark)
+				|| Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Mark || Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Except)
 			{
 				token = get<Utils::e_WholeStr>(it);
 				processed_note.push_back({get<Utils::e_Number>(it), token, {}});
@@ -227,7 +226,6 @@ namespace Lexem
 							}
 						}
 					}
-
 
 					processed_note.push_back({get<Utils::e_Number>(it), token,
 						arg_parse(get<Utils::e_WholeStr>(it).substr(pos, get<Utils::e_WholeStr>(it).size( )))});
