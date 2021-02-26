@@ -139,6 +139,12 @@ namespace Parser
 					throw excp;
 				}
 
+				if (STR [STR.size( ) - 1] == ' ')
+				{
+					STR.resize(STR.size( ) - 1);
+				}
+					
+
 				note.push_back({Cur_Row, STR}); //Since C++17
 				Cur_Row++;
 				STR.clear( );

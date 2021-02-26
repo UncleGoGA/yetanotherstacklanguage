@@ -5,17 +5,14 @@
 #include <tuple>
 #include <string>
 #include <sstream>
+#include <limits.h>
 #include "Exceptions.h"
 
 #define complete_str std::tuple<size_t, std::string> //row one_string
-//need to use vector as data storage for arguments
-#define lexed_str std::tuple<size_t, std::string, std::string> //row token argument
 
 namespace Lexem
 {
 	using namespace std;
-
-	vector<lexed_str> processed_note; //вектор токенизированных строк
 
 	namespace Utils
 	{
@@ -24,22 +21,35 @@ namespace Lexem
 			e_Comment, e_Dollar, e_JI, e_Pop, e_Push, e_Jmp, e_Read, e_Write, e_list, e_End,
 			e_Diff, e_Sym, e_Inter, e_Union, e_Err, e_End_mark, e_TCompare, e_TOperation, e_At,
 			e_Concat, e_Size, e_Substr, e_Delsubstr, e_Empty, e_Cycle, e_If, e_Init, e_Create,
-			e_Except, e_Type, e_Var, e_Mark,
+			e_Except, e_Type, e_Var, e_Mark, e_Const, e_ODD,
+
+			e_Unread,
 
 
 
 			e_AllToken
 		};
 
+		//row - res tokenaze
+		const char cur_token [34] [11]
+		{
+			{"Comment"}, {"Dollar"}, {"JI"}, {"Pop"}, {"Push"},
+			{"Jmp"}, {"Read"}, {"Write"}, {"list"}, {"End"},
+			{"Diff"}, {"Sym"}, {"Inter"}, {"Union"}, {"Err"},
+			{"End_mark"}, {"TCompare"}, {"TOperation"}, {"At"}, {"Concat"},
+			{"Size"}, {"Substr"}, {"Delsubstr"}, {"Empty"}, {"Cycle"},
+			{"If"},{"Init"},{"Create"},{"Except"},{"Type"},
+			{"Var"}, {"Mark"}, {"Const"}, {"ODD"}
+		};
+
 		enum arrow
 		{
 			e_Number,
 			e_WholeStr,
-			e_Lexem = 1,
-			e_Argument,
 
 			e_count
 		};
+
 		//refactoring
 		static int tokenaze(std::string& word) //better to get all lexems by lower
 		{
@@ -73,7 +83,7 @@ namespace Lexem
 			else if (word == "union")
 				return e_Union;
 
-			else if (word == "Comm" || word == "//" || word == "<--") //at this moment we can use C++ commentary style
+			else if (word == "Comm" || word == "//" || word == "<--" || word == "-->")
 				return e_Comment;
 
 			else if (word == "Mark")
@@ -103,6 +113,9 @@ namespace Lexem
 			else if (word == ";")
 				return e_Empty;
 
+			else if (word == ":")
+				return e_ODD;
+
 			else if (word == "for" || word == "while")
 				return e_If;
 
@@ -128,115 +141,76 @@ namespace Lexem
 				&& word [word.size( ) - 1] == '>' && word [word.size( ) - 2] == '>')
 				return e_Mark;
 
+			else if (std::min(std::max(std::stoi(word), INT_MIN), INT_MAX) != INT_MIN ||
+				std::min(std::max(std::stoi(word), INT_MIN), INT_MAX) != INT_MAX)
+				return e_Const;
+
 			return e_Err;
 		}
 	}
 
-	std::string arg_parse(std::string argument)
+	struct T_word
 	{
-		argument.push_back(' ');
+		std::string token;
 		std::string word;
-		std::vector<std::string> words;
+	};
 
-		for (auto it : argument)
-		{
-			if (isalpha(it) || isdigit(it))
-				word.push_back(it);
+#define lexed_str std::tuple<size_t, std::vector<T_word>>
 
-			else if (isspace(it) && !word.empty( ))
-			{
-				words.push_back(word);
-				word.clear( );
-			}
-		}
+	std::vector<lexed_str> processed_str;
 
-		word.clear( );
-
-		for (auto it : words)
-		{
-			for (auto s_it = it.begin( ); s_it != it.end( ); ++s_it)
-			{
-				word.push_back(*s_it);
-			}
-			word.push_back(' ');
-		}
-
-		return word;
-	}
-
-	void Lex_(vector<complete_str>& Compl_STR)
+	//end doesnt include
+	std::string substr(std::string::iterator start, std::string::iterator end)
 	{
-		string token;
-		string str;
+		std::string wrd;
 
-		for (auto it : Compl_STR)
+		for (; start != end; ++start)
+			wrd.push_back(*start);
+
+		return wrd;
+	}
+
+	T_word Lexer(std::string wrd)
+	{
+		T_word res;
+
+		res.token = Utils::cur_token [Utils::tokenaze(wrd)];
+		res.word = wrd;
+
+		return res;
+	}
+
+	void Lex_(std::vector<complete_str>& STR)
+	{
+		std::string initial_str;
+
+		for (auto it : STR)
 		{
-			if (get<Utils::e_WholeStr>(it) == "write" || get<Utils::e_WholeStr>(it) == "read" || get<Utils::e_WholeStr>(it) == "end"
-				|| Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Mark || Utils::tokenaze(get<Utils::e_WholeStr>(it)) == Utils::e_Except)
+			initial_str = get<Utils::e_WholeStr>(it);
+			initial_str.push_back(' ');
+
+			std::vector<T_word> T_words;
+			std::string::iterator i_end;
+
+			for (std::string::iterator i_it = initial_str.begin(); i_it != initial_str.end(); ++i_it)
 			{
-				token = get<Utils::e_WholeStr>(it);
-				processed_note.push_back({get<Utils::e_Number>(it), token, {}});
-
-				token.clear( );
-				continue;
-			}
-
-			str = get<Utils::e_WholeStr>(it);
-			for (auto s_it = str.begin( ); s_it != str.end( ); ++s_it)
-			{
-				size_t pos = 0;
-				if (isalpha(*s_it) || isdigit(*s_it) || *s_it == '/'/*refactoring*/ ||
-					*s_it == '-' || *s_it == '<')
-				{
-					for (; *s_it != ' '; ++s_it, ++pos)
-						token.push_back(*s_it);
-
-					if (Utils::tokenaze(token) == Utils::e_Err)
-					{
-						Main_exception::tokenize_exception excpt("Unrecognized token", token, get<0>(it));
-						throw excpt;
-					}
-
-					if (token == "<--" || token == "exception" || Utils::tokenaze(token) == Utils::e_Var)
-					{
-						string semi = get<Utils::e_WholeStr>(it);
-
-						for (string::reverse_iterator r_it = semi.rbegin( ); r_it != semi.rend( ); ++r_it)
-						{
-							if (Utils::tokenaze(token) == Utils::e_Var)
-							{
-								if (*r_it == 'e' && *(r_it + 1) == 'p' && *(r_it + 2) == 'y' && *(r_it + 3) == 'T' &&
-									(*(r_it + 4) == ':' || *(r_it + 5) == ':'))
-								{
-									processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
-
-									token.clear( );
-									break;
-								}
-							}
-							else
-							{
-								if (*r_it == '>' && *(r_it + 1) == '-' && *(r_it + 2) == '-' && *(r_it + 3) != '<')
-								{
-									processed_note.push_back({get<Utils::e_Number>(it), semi, {}});
-
-									token.clear( );
-									break;
-								}
-							}
-						}
-					}
-
-					processed_note.push_back({get<Utils::e_Number>(it), token,
-						arg_parse(get<Utils::e_WholeStr>(it).substr(pos, get<Utils::e_WholeStr>(it).size( )))});
-
-					token.clear( );
-
+				i_end = std::find(i_it, initial_str.end( ), ' ');
+				T_words.push_back(Lexer(substr(i_it, i_end)));
+				if (i_end == initial_str.end( ))
 					break;
-				}
+				i_it = i_end;
 			}
+
+			if (T_words [0].token == "Comment")
+			{
+				for (auto t_it : T_words)
+					t_it.token = "Comment";
+			}
+
+			processed_str.push_back({std::get<Utils::e_Number>(it), T_words});
 		}
 	}
+
 
 }
 
