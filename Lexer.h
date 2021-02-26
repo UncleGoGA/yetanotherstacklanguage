@@ -172,6 +172,13 @@ namespace Lexem
 
 	T_word Lexer(std::string wrd)
 	{
+		if (Utils::tokenaze(wrd) == Utils::e_Err)
+		{
+			Main_exception::tokenize_exception expt("Wrong token", wrd, 0);
+
+			throw expt;
+		}
+
 		T_word res;
 
 		res.token = Utils::cur_token [Utils::tokenaze(wrd)];
@@ -195,7 +202,18 @@ namespace Lexem
 			for (std::string::iterator i_it = initial_str.begin(); i_it != initial_str.end(); ++i_it)
 			{
 				i_end = std::find(i_it, initial_str.end( ), ' ');
-				T_words.push_back(Lexer(substr(i_it, i_end)));
+
+				try
+				{
+					T_words.push_back(Lexer(substr(i_it, i_end)));
+				}
+				catch (Main_exception::tokenize_exception expt)
+				{
+					Main_exception::tokenize_exception expt_out(expt.Err, expt.Token, get<Utils::e_Number>(it));
+
+					throw expt_out;
+				}
+
 				if (i_end == initial_str.end( ))
 					break;
 				i_it = i_end;
